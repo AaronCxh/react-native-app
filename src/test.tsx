@@ -1,63 +1,138 @@
-﻿import React, {useState, useCallback} from 'react';
-import {StyleSheet, Text, Button, Alert} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-import GotoButton from './normal';
-import {FeedProps, MessagesProps, TestParamList, TestProps} from './types';
-import {createStackNavigator} from '@react-navigation/stack';
-import {store} from './store/configureStore';
-import {connect} from 'react-redux';
+﻿import React, {useState} from 'react';
+import {
+  StyleSheet,
+  Button,
+  View,
+  PermissionsAndroid,
+  Dimensions,
+  Image,
+  ScrollView,
+} from 'react-native';
+import {TestProps} from './types';
+import SYImagePicker from 'react-native-syan-image-picker';
 
-const Stack = createStackNavigator<TestParamList>();
-
-function Feed({navigation, route, count}: FeedProps) {
-  return (
-    <SafeAreaView style={[styles.container, {backgroundColor: '#6a51ae'}]}>
-      {/* <StatusBar barStyle="light-content" backgroundColor="#6a51ae" /> */}
-      <Text>
-        Feed======{route.params?.title}
-        {count}
-      </Text>
-      <Button
-        title="Messages"
-        onPress={() => {
-          navigation.navigate('Messages', {msg: '发送请求'});
-        }}
-      />
-      <Button
-        title="back"
-        onPress={() => {
-          // navigation.goBack();
-          navigation.navigate('Messages');
-        }}
-      />
-    </SafeAreaView>
-  );
-}
-function Messages({navigation, route}: MessagesProps) {
-  return (
-    <SafeAreaView style={[styles.container, {backgroundColor: '#ecf0f1'}]}>
-      {/* <StatusBar barStyle="dark-content" backgroundColor="#ecf0f1" /> */}
-      <Text>Messages{route.params?.msg}</Text>
-      <Button
-        title="back"
-        onPress={() => {
-          navigation.goBack();
-        }}
-      />
-      <GotoButton screenName="Feed" />
-      <Button
-        title="getState"
-        onPress={() => {
-          console.log(store.getState());
-        }}
-      />
-    </SafeAreaView>
-  );
-}
-let FeedContainer = connect((state: any) => ({count: state.count}))(Feed);
+const {width} = Dimensions.get('window');
 
 const Test: React.FC<TestProps> = (props) => {
+  let [photos, setPhotos] = useState<any>([]);
+  const requestPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: '申请读写手机存储权限',
+          message:
+            '一个很牛逼的应用想借用你的摄像头，' +
+            '然后你就可以拍出酷炫的皂片啦。',
+          buttonNeutral: '等会再问我',
+          buttonNegative: '不行',
+          buttonPositive: '好吧',
+        },
+      );
+      console.log('=====', granted);
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('现在你获得摄像头权限了');
+      } else {
+        console.log('用户并不给你');
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+  // const handleOpenImagePicker = () => {
+  //   SYImagePicker.showImagePicker(
+  //     {
+  //       imageCount: 1,
+  //       isRecordSelected: true,
+  //       isCrop: true,
+  //       showCropCircle: true,
+  //       quality: 90,
+  //       compress: true,
+  //       enableBase64: false,
+  //     },
+  //     (err, photos) => {
+  //       console.log('开启', err, photos);
+  //       if (!err) {
+  //         setPhotos(photos);
+  //       } else {
+  //         console.log(err);
+  //       }
+  //     },
+  //   );
+  // };
+
+  /**
+   * 使用方式sync/await
+   * 相册参数暂时只支持默认参数中罗列的属性；
+   * @returns {Promise<void>}
+   */
+  const handleAsyncSelectPhoto = async () => {
+    // SYImagePicker.removeAllPhoto()
+    try {
+      const res = await SYImagePicker.asyncShowImagePicker({
+        // allowPickingOriginalPhoto: true,
+        isCrop: true,
+        imageCount: 8,
+        showSelectedIndex: false,
+        isGif: true,
+        enableBase64: true,
+      });
+      console.log('关闭', res);
+      // 选择成功
+      setPhotos([...photos, ...res]);
+    } catch (err) {
+      console.log(err);
+      // 取消选择，err.message为"取消"
+    }
+  };
+
+  // const handlePromiseSelectPhoto = () => {
+  //   SYImagePicker.asyncShowImagePicker({imageCount: 3})
+  //     .then((res) => {
+  //       console.log(res);
+  //       const arr = res.map((v) => {
+  //         return v;
+  //       });
+  //       // 选择成功
+  //       setPhotos([...photos, ...arr])
+  //     })
+  //     .catch((err) => {
+  //       // 取消选择，err.message为"取消"
+  //     });
+  // };
+
+  const handleLaunchCamera = async () => {
+    await requestPermission();
+    SYImagePicker.openCamera(
+      {isCrop: true, showCropCircle: true, showCropFrame: false},
+      (err, res) => {
+        console.log(err, res);
+        if (!err) {
+          setPhotos([...photos, ...res]);
+        }
+      },
+    );
+  };
+
+  // const handleDeleteCache = () => {
+  //   SYImagePicker.deleteCache();
+  // };
+
+  // const handleOpenVideoPicker = () => {
+  //   SYImagePicker.openVideoPicker(
+  //     {allowPickingMultipleVideo: true},
+  //     (err, res) => {
+  //       console.log(err, res);
+  //       if (!err) {
+  //         let photos = [...photos];
+  //         res.map((v) => {
+  //           photos.push({...v, uri: v.coverUri});
+  //         });
+  //         setPhotos(photos)
+  //       }
+  //     },
+  //   );
+  // };
   /* useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -74,8 +149,7 @@ const Test: React.FC<TestProps> = (props) => {
         BackHandler.removeEventListener('hardwareBackPress', onBackPress);
     }, []),
   ); */
-  const {route} = props;
-  const [] = useState('123');
+  // const {route} = props;
   /* useEffect(() => {
     navigation.addListener('beforeRemove', (e: any) => {
       console.log(e.data.action);
@@ -97,54 +171,29 @@ const Test: React.FC<TestProps> = (props) => {
       );
     });
   }, [navigation, hasUnsavedChanges]); */
-  const [] = useState(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      Alert.alert('focused');
-      return () => {
-        Alert.alert('unfocused');
-      };
-    }, []),
-  );
-
-  // const ThemeContext = useContext(aContext);
-  // const {text, test} = route.params;
   return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Feed"
-        component={FeedContainer}
-        initialParams={{title: route.params?.name}}
-        options={{
-          headerShown: false,
-          headerStyle: {backgroundColor: 'tomato'},
-        }}
-      />
-      <Stack.Screen
-        name="Messages"
-        component={Messages}
-        initialParams={{
-          msg: '发送消息',
-        }}
-        options={{
-          animationTypeForReplace: 'pop',
-        }}
-      />
-    </Stack.Navigator>
-    // <View style={styles.greeting}>
-    //   <Text style={styles.colors} selectable>
-    //     {test},{text},{ThemeContext.text}
-    //   </Text>
-    //   <Button
-    //     title="Go to Details... again"
-    //     onPress={() => navigation.navigate('home')}
-    //   />
-    //   <Button
-    //     title="Update the title"
-    //     onPress={() => navigation.setOptions({title: 'Updated!'})}
-    //   />
-    // </View>
+    <View style={styles.greeting}>
+      <View style={styles.scroll}>
+        <Button title={'拍照'} onPress={handleLaunchCamera} />
+        <Button title={'选择图片'} onPress={handleAsyncSelectPhoto} />
+      </View>
+      <ScrollView style={{flex: 1}} contentContainerStyle={styles.scroll}>
+        {photos.map((photo, index) => {
+          let source = {uri: photo.uri};
+          if (photo.enableBase64) {
+            source = {uri: photo.base64};
+          }
+          return (
+            <Image
+              key={`image-${index}`}
+              style={styles.image}
+              source={source}
+              resizeMode={'contain'}
+            />
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -156,7 +205,31 @@ const styles = StyleSheet.create({
   colors: {
     color: 'red',
   },
-  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  container: {
+    flex: 1,
+    backgroundColor: '#F5FCFF',
+    paddingTop: 40,
+  },
+  btn: {
+    backgroundColor: '#FDA549',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 44,
+    paddingHorizontal: 12,
+    margin: 5,
+    borderRadius: 22,
+  },
+  scroll: {
+    padding: 5,
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+  },
+  image: {
+    margin: 10,
+    width: (width - 80) / 3,
+    height: (width - 80) / 3,
+    backgroundColor: '#F0F0F0',
+  },
 });
 
 export default Test;

@@ -1,4 +1,4 @@
-﻿import {StackNavigationProp, StackScreenProps} from '@react-navigation/stack';
+import {StackNavigationProp, StackScreenProps} from '@react-navigation/stack';
 import {RouteProp, CompositeNavigationProp} from '@react-navigation/native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 

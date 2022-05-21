@@ -1,7 +1,7 @@
 ﻿import React, {useEffect} from 'react';
 import {View, Text, TouchableHighlight} from 'react-native';
 import {connect} from 'react-redux';
-import {Picker, Posts} from '../components';
+import {Picker, Posts} from '../pages';
 
 import {
   selectSubreddit,

@@ -1,4 +1,6 @@
 apply plugin: "com.android.application"
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+
 
 import com.android.build.OutputFile
 
@@ -78,7 +80,7 @@ import com.android.build.OutputFile
  */
 
 project.ext.react = [
-    enableHermes: false,  // clean and rebuild if changing
+    enableHermes: true,  // clean and rebuild if changing
 ]
 
 apply from: "../../node_modules/react-native/react.gradle"
@@ -132,8 +134,9 @@ android {
         applicationId "com.myappp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode generateVersionCode()
+        versionName generateVersionName()
+        multiDexEnabled true
     }
     splits {
         abi {
@@ -173,11 +176,26 @@ android {
             def abi = output.getFilter(OutputFile.ABI)
             if (abi != null) {  // null for the universal-debug, universal-release variants
                 output.versionCodeOverride =
-                        versionCodes.get(abi) * 1048576 + defaultConfig.versionCode
+                        defaultConfig.versionCode * 1000 + versionCodes.get(abi)
             }
 
         }
     }
+}
+ 
+/** 
+ * Internal version number generator
+ * Refer https://developer.android.com/google/play/publishing/multiple-apks.html#using-a-version-code-scheme
+*/
+private Integer generateVersionCode() {
+  return project.env.get("versionCode").toInteger();
+}
+
+/**
+ * Internal version name generator
+*/
+private String generateVersionName() {
+   return project.env.get("versionName");
 }
 
 dependencies {
@@ -186,6 +204,8 @@ dependencies {
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
+
+    implementation "com.android.support:multidex:1.0.3"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
       exclude group:'com.facebook.fbjni'
