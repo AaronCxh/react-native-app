@@ -1,16 +1,10 @@
 ﻿import {combineReducers} from 'redux';
+import * as modulesFiles from './modules';
 
-const modules: any = {};
-const modulesFiles = require.context('./modules', true, /\.js$/);
+let modules: any = {};
 
-// console.log('modulesFiles', modulesFiles.keys())
-// you do not need `import app from './modules/app'`
-// it will auto require all vuex module from modules file
-modulesFiles.keys().reduce((module: any, modulePath: any) => {
-  const value = modulesFiles(modulePath);
-  for (let key in value.default) {
-    modules[key] = value.default[key];
-  }
-}, {});
+Object.values(modulesFiles.default).forEach((element) => {
+  Object.assign(modules, element);
+});
 
 export default combineReducers(modules);

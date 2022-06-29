@@ -12,3 +12,7 @@ declare module '*.styl';
 type Item = {
   AutoID: number;
 };
+
+interface DefaultRootState {
+  isOnline: Boolean;
+}

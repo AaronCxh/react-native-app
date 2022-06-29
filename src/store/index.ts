@@ -1,5 +1,11 @@
 ﻿import rootReducer from '../reducers';
-import {createStore, Store, applyMiddleware, AnyAction} from 'redux';
+import {
+  legacy_createStore as createStore,
+  Store,
+  applyMiddleware,
+  AnyAction,
+} from 'redux';
+// import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import thunkMiddleware from 'redux-thunk';
 
 function logger({getState}: any) {
@@ -14,15 +20,12 @@ function logger({getState}: any) {
   };
 }
 
-export default function configureStore(preloadedState: any = undefined): Store {
+function configureStore(preloadedState: any = undefined): Store {
   return createStore(
     rootReducer,
     preloadedState,
-    // {
-    //   postsBySubreddit: {},
-    //   selectedSubreddit: 'reactjs1',
-    // },
     applyMiddleware(thunkMiddleware, logger),
   );
 }
-// export const store: Store = createStore(rootReducer, applyMiddleware);
+
+export default configureStore();
